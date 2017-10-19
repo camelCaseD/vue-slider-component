@@ -432,7 +432,7 @@ export default {
 			if (this.isRange) {
 				this.currentSlider = pos > ((this.position[1] - this.position[0]) / 2 + this.position[0]) ? 1 : 0
 			}
-			this.setValueOnPos(pos)
+			this.setValueOnPos(pos, false, true)
 		},
 		moveStart (index) {
 			if (this.isDisabled) return false
@@ -447,7 +447,7 @@ export default {
 			e.preventDefault()
 
 			if (e.targetTouches && e.targetTouches[0]) e = e.targetTouches[0]
-			this.setValueOnPos(this.getPos(e), true)
+			this.setValueOnPos(this.getPos(e), true, false)
 		},
 		moveEnd (e) {
 			if (this.flag) {
@@ -462,22 +462,22 @@ export default {
 			this.flag = false
 			this.setPosition()
 		},
-		setValueOnPos (pos, isDrag) {
+		setValueOnPos (pos, isDrag, isClick) {
 			let range = this.isRange ? this.limit[this.currentSlider] : this.limit
 			let valueRange = this.isRange ? this.valueLimit[this.currentSlider] : this.valueLimit
 			if (pos >= range[0] && pos <= range[1]) {
 				this.setTransform(pos)
 				let v = (Math.round(pos / this.gap) * (this.spacing * this.multiple) + (this.minimum * this.multiple)) / this.multiple
-				this.setCurrentValue(v, isDrag)
+				this.setCurrentValue(v, isDrag, isClick)
 			}
 			else if (pos < range[0]) {
 				this.setTransform(range[0])
-				this.setCurrentValue(valueRange[0])
+				this.setCurrentValue(valueRange[0], false, isClick)
 				if (this.currentSlider === 1) this.currentSlider = 0
 			}
 			else {
 				this.setTransform(range[1])
-				this.setCurrentValue(valueRange[1])
+				this.setCurrentValue(valueRange[1], false, isClick)
 				if (this.currentSlider === 0) this.currentSlider = 1
 			}
 		},
@@ -490,20 +490,20 @@ export default {
 			}
 			return a !== b
 		},
-		setCurrentValue (val, bool) {
+		setCurrentValue (val, bool, isClick) {
 			if (val < this.minimum || val > this.maximum) return false
 			if (this.isRange) {
 				if (this.isDiff(this.currentValue[this.currentSlider], val)) {
 					this.currentValue.splice(this.currentSlider, 1, val)
 					if (!this.lazy || !this.flag) {
-						this.syncValue()
+						this.syncValue(undefined, isClick)
 					}
 				}
 			}
 			else if (this.isDiff(this.currentValue, val)) {
 				this.currentValue = val
 				if (!this.lazy || !this.flag) {
-					this.syncValue()
+					this.syncValue(undefined, isClick)
 				}
 			}
 			bool || this.setPosition()
@@ -632,9 +632,9 @@ export default {
 			}
 			return bool && val
 		},
-		syncValue (noCb) {
+		syncValue (noCb, isClick = false) {
 			noCb || this.$emit('callback', this.val)
-			this.$emit('input', this.isRange ? this.val.concat() : this.val)
+			this.$emit('input', this.isRange ? this.val.concat() : this.val, isClick)
 		},
 		getValue () {
 			return this.val
